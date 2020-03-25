@@ -1,0 +1,137 @@
+import java.util.Stack;
+import java.util.Scanner;
+import java.util.UnknownFormatFlagsException;
+import java.util.EmptyStackException;
+/*由于java浮点数本身的计算误差，对于比较复杂的浮点数计算可能会有一小点偏差
+ * 该程序适应于多位数（整数、浮点数）的任何加减乘除表达式的运算
+ * 可以对输入表达式的格式是否正确进行判断
+ */
+public class Middle_Expression {
+	/*比较字符串a，b的优先级（实际上每个串里只有一个字符，只不过由于多位数运算需要而这么处理）*/
+	static boolean cmp(String a,String b){
+		if(a.equalsIgnoreCase("*")||a.equalsIgnoreCase("/"))  //返回false则b的优先级高，true则a的优先级高
+		         return true;
+		    if(a.equalsIgnoreCase("-")||a.equalsIgnoreCase("+")) { 
+		    	if(b.equalsIgnoreCase("-")||b.equalsIgnoreCase("+")) return true;
+		    }
+		    if(b.equalsIgnoreCase("*")||b.equalsIgnoreCase("/"))
+		    {
+		    	if(a.equalsIgnoreCase("-")||a.equalsIgnoreCase("+")) return false;
+		    	else return false;
+		    }
+		    if(b.equalsIgnoreCase("-")||b.equalsIgnoreCase("+")) {
+		    	return false;
+		    }
+		    return false;
+		}
+     public static void main(String[] args) {
+    	 
+    	 Scanner in0=new Scanner(System.in);
+    	 System.out.print("请输入要求值的表达式：");
+    	 String exp=in0.nextLine();   //用户输入的表达式
+    	 Stack<String> stack0=new Stack<>();   //处理用户输入的表达式得到后缀表达式的栈(支持多位数运算，所以设为String类型）
+    	 String save1[]=new String[100];    //存储由用户表达式得到的后缀表达式的数组(支持多位数运算，所以设为String类型）
+    	 Stack<Float> stack1=new Stack<>();    //处理由后缀表达式运算的栈
+    	 for(int i=0;i<100;i++) {
+    		 save1[i]="";
+    	 }
+    	 int j=0;
+    	 int k=101;
+    	 int l=0;
+    	 int flag=0;
+    	try {
+    	 for(int i=0;i<exp.length();i++) {    //遍历输入的用户表达式
+    		 if(exp.charAt(i)=='(')  stack0.push(String.valueOf(exp.charAt(i)));    //如果是（ ，则直接入栈
+    		 if(exp.charAt(i)==')') {  //如果是），则将栈stack0里面栈顶元素依次弹出并输出到数组save1里面,直到遇到（，弹出但不输出
+    			 while(!stack0.peek().equalsIgnoreCase("(")) {save1[j++]=stack0.peek();stack0.pop();}
+    		     stack0.pop();
+    		 }
+    		 if(exp.charAt(i)=='*'||exp.charAt(i)=='/'||exp.charAt(i)=='-'||exp.charAt(i)=='+')//如果是运算符
+    		 {
+    			 if(stack0.isEmpty()) stack0.push(String.valueOf(exp.charAt(i)));  //栈为空，直接入栈
+    			 else {  
+    				 /*否则栈不为空，如果扫描到的exp.charAt(i)比栈顶优先级高，则该运算符入栈*/
+    			    if(!cmp(stack0.peek(),String.valueOf(exp.charAt(i)))) stack0.push(String.valueOf(exp.charAt(i)));
+    			    /*如果扫描到的exp.charAt(i)比栈顶优先级低或相等，将栈顶运算符出栈并输出到数组save1
+    			     * 然后exp.charAt(i)再继续和新的栈顶运算符比较优先级，若exp.charAt(i)较高或者此时栈顶是（，则将它入栈
+    			     * 若exp.charAt(i)较低或者两者相等，则继续该段注释第一排的操作
+    			     */
+    			    else {
+    				 while(!stack0.isEmpty()&&cmp(stack0.peek(),String.valueOf(exp.charAt(i))))
+    				 { save1[j++]=stack0.peek();stack0.pop();}
+    				 stack0.push(String.valueOf(exp.charAt(i)));
+    			 }
+    			 }
+    		 }
+    		 if(exp.charAt(i)>='0'&&exp.charAt(i)<='9'||exp.charAt(i)=='.') { //如果扫描到的是数字或者小数点直接输出到save1数组里
+    			
+    			 if(k+1==i) { j--; save1[j++]+=String.valueOf(exp.charAt(i)); }
+    			 else save1[j++]=String.valueOf(exp.charAt(i)); 
+    			 k=i;
+    		 }
+    		 if(i==exp.length()-1) {    //扫描到末尾如果栈里面还有元素则全部弹出并输出到数组save1
+    			 while(!stack0.isEmpty()) {
+    				 save1[j++]=stack0.peek(); stack0.pop();
+    			 }
+    		 }
+    	 }
+    	}  
+    	catch(Exception e) {
+    		System.out.println("您输入的表达式格式不正确！！！"); flag=1;
+    	}
+    	finally { if(flag==1) return;
+       	}
+         /*将以上产生的后缀表达式从头扫描压入栈stack1中
+          * 压入规则：如果扫描到的是全数字字符串，则将该字符串转化为float型后压入栈stack1中
+          * 如果扫描到的是运算符，则依次取stack1中最上面两个数出栈做该运算，得到的结果返回栈顶
+          * 依次进行，最后得到的栈顶元素就为用户输入的表达式值
+          */
+    	try {
+    	 for(int i=0;i<j;i++) {
+    		 if(!save1[i].equalsIgnoreCase("+")&&!save1[i].equalsIgnoreCase("-")&&!save1[i].equalsIgnoreCase("*")&&!save1[i].equalsIgnoreCase("/")) {
+    			 if(save1[i]!=null)
+    			 stack1.push(Float.parseFloat(save1[i]));   
+    		 }
+     		 if(save1[i].equalsIgnoreCase("+")) {          
+     			 float f1=stack1.peek(); stack1.pop();
+     			 float f2=stack1.peek(); stack1.pop();
+     			 float f3=f1+f2;stack1.push(f3);
+     		 }
+     		if(save1[i].equalsIgnoreCase("-")) {
+    			 float f1=stack1.peek(); stack1.pop();
+    			 float f2=stack1.peek(); stack1.pop();
+    			 float f3=f2-f1;stack1.push(f3);
+    		 }
+     		if(save1[i].equalsIgnoreCase("*")) {
+    			 float f1=stack1.peek(); stack1.pop();
+    			 float f2=stack1.peek(); stack1.pop();
+    			 float f3=f1*f2;stack1.push(f3);
+    		 }
+     		if(save1[i].equalsIgnoreCase("/")) {
+    			 float f1=stack1.peek(); stack1.pop();
+    			 float f2=stack1.peek(); stack1.pop();
+    			 float f3=f2/f1;stack1.push(f3);
+    		 }
+    	 }
+    	 /*栈里面最终只剩一个数，也就是最终结果
+    	  * 或者因为输入表达式格式有误而不能输出结果
+    	  */
+    	 if(stack1.size()!=1)System.out.println("您输入的表达式格式不正确！！！");
+    	 else {
+    		 System.out.print("用户表达式的后缀形式为：");
+        	 for(int i=0;i<j;i++) {
+        		 System.out.printf("%s ",save1[i]);    //输出产生的后缀表达式
+        	 }
+        	 System.out.printf("\n"); 
+    		 System.out.printf("结果为：%f\n",stack1.peek());
+    	 }
+    	}
+    	/*因为输入表达式格式有误而抛出异常*/
+    	catch(Exception e) {
+    		System.out.println("您输入的表达式格式不正确！！！");
+    	}
+    	finally {
+    	 in0.close();
+    	}
+    	 }
+}
